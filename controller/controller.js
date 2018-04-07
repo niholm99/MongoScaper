@@ -8,7 +8,7 @@ var request = require('request');
 var cheerio = require('cheerio');
 
 //Require models
-var Comment = require('../models/Note.js');
+var Note = require('../models/Note.js');
 var Article = require('../models/Article.js');
 
 //index
@@ -20,12 +20,12 @@ router.get('/', function(req, res) {
 // A GET request to scrape the Medium website
 router.get('/scrape', function(req, res) {
     // First, we grab the body of the html with request
-    request('https://news.ycombinator.com', function(error, response, html) {
+    request('https://www.cnbc.com/finance/', function(error, response, html) {
         // Then, we load that into cheerio and save it to $ for a shorthand selector
         var $ = cheerio.load(html);
         var titlesArray = [];
         // Now, we grab every article
-        $('.title').each(function(i, element) {
+        $('.headline').each(function(i, element) {
             // Save an empty result object
             var result = {};
 
@@ -117,6 +117,7 @@ router.get('/clearAll', function(req, res) {
 });
 
 router.get('/readArticle/:id', function(req, res){
+  console.log("inside the root");
   var articleId = req.params.id;
   var hbsObj = {
     article: [],
@@ -125,7 +126,7 @@ router.get('/readArticle/:id', function(req, res){
 
     // //find the article at the id
     Article.findOne({ _id: articleId })
-      .populate('comment')
+      .populate('note')
       .exec(function(err, doc){
       if(err){
         console.log('Error: ' + err);
@@ -136,9 +137,9 @@ router.get('/readArticle/:id', function(req, res){
         request(link, function(error, response, html) {
           var $ = cheerio.load(html);
 
-          $('.section-content').each(function(i, element){
-            hbsObj.body = $(this).children('.section-inner sectionLayout--insetColumn').children('p').text();
-            //send article body and comments to article.handlbars through hbObj
+          $('.group-container last').each(function(i, element){
+            hbsObj.body = $(this).children('.group').children('p').text();
+            //send article body and notes to article.handlbars through hbObj
             res.render('article', hbsObj);
             //prevents loop through so it doesn't return an empty hbsObj.body
             return false;
@@ -149,28 +150,28 @@ router.get('/readArticle/:id', function(req, res){
     });
 });
 
-// Create a new comment
-router.post('/comment/:id', function(req, res) {
+// Create a new note
+router.post('/note/:id', function(req, res) {
   var user = req.body.name;
-  var content = req.body.comment;
+  var content = req.body.note;
   var articleId = req.params.id;
 
   //submitted form
-  var commentObj = {
+  var noteObj = {
     name: user,
     body: content
   };
  
-  //using the Comment model, create a new comment
-  var newComment = new Comment(commentObj);
+  //using the note model, create a new comment
+  var newNote = new Note(noteObj);
 
-  newComment.save(function(err, doc) {
+  newNote.save(function(err, doc) {
       if (err) {
           console.log(err);
       } else {
           console.log(doc._id)
           console.log(articleId)
-          Article.findOneAndUpdate({ "_id": req.params.id }, {$push: {'comment':doc._id}}, {new: true})
+          Article.findOneAndUpdate({ "_id": req.params.id }, {$push: {'note':doc._id}}, {new: true})
             //execute everything
             .exec(function(err, doc) {
                 if (err) {
