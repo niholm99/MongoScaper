@@ -20,17 +20,17 @@ router.get('/', function(req, res) {
 // A GET request to scrape the Medium website
 router.get('/scrape', function(req, res) {
     // First, we grab the body of the html with request
-    request('https://medium.com/topic/technology', function(error, response, html) {
+    request('https://news.ycombinator.com', function(error, response, html) {
         // Then, we load that into cheerio and save it to $ for a shorthand selector
         var $ = cheerio.load(html);
         var titlesArray = [];
         // Now, we grab every article
-        $('u-flex0 u-sizeFullWidth').each(function(i, element) {
+        $('.title').each(function(i, element) {
             // Save an empty result object
             var result = {};
 
             // Add the text and href of every link, and save them as properties of the result object
-            result.title = $(this).children('h3').text();
+            result.title = $(this).children('a').text();
             result.link = $(this).children('a').attr('href');
 
             //ensures that no empty title or links are sent to mongodb
