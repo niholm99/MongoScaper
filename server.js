@@ -21,13 +21,19 @@ app.engine('handlebars', exphbs({
 app.set('view engine', 'handlebars');
 
 //connecting to MongoDB
-mongoose.connect('mongodb://localhost/scrapeNews');
+var MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost/scrapeNews";
 
-var db = mongoose.connection;
+mongoose.Promise = Promise;
+mongoose.connect(MONGODB_URI, {
+  useMongoClient: true
+});
+
+
+/*var db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', function() {
   console.log('Connected to Mongoose!')
-});
+});*/
 
 var routes = require('./controller/controller.js');
 app.use('/', routes);
